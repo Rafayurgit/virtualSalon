@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --transition: 200ms;
+}
+
+/* small helpers */
+.container { max-width: 1024px; }
+
+/* Example subtle theming */
+.btn-transition { transition: background-color var(--transition), color var(--transition); }
