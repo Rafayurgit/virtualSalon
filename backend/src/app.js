@@ -10,6 +10,7 @@ import shopsRouter from './modules/shops/routes.js';
 import queueRouter from './modules/queue/routes.js';
 import bookingsRouter from './modules/bookings/routes.js';
 import barbersRouter from './modules/barbers/routes.js';
+import authRouter from './modules/auth/routes.js';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/api/shops', shopsRouter);
 app.use('/api/queue', queueRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/barbers', barbersRouter);
+app.use('/api/auth', authRouter);
 
 // Health
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
