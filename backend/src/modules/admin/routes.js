@@ -6,9 +6,9 @@ import { roleMiddleware } from '../../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-// only allow authenticated barbers or admins in future
-router.get('/shops', authMiddleware, roleMiddleware(['barber']), asyncHandler(getAllShops));
-router.get('/bookings', authMiddleware, roleMiddleware(['barber']), asyncHandler(getAllBookings));
-router.get('/stats', authMiddleware, roleMiddleware(['barber']), asyncHandler(getStats));
+// allow authenticated barbers or admins
+router.get('/shops', authMiddleware, roleMiddleware(['barber', 'admin']), asyncHandler(getAllShops));
+router.get('/bookings', authMiddleware, roleMiddleware(['barber', 'admin']), asyncHandler(getAllBookings));
+router.get('/stats', authMiddleware, roleMiddleware(['barber', 'admin']), asyncHandler(getStats));
 
 export default router;

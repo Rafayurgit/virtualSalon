@@ -2,32 +2,47 @@ import Booking from './model.js';
 import Queue from '../queue/model.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import { getIo } from '../../utils/socket.js';
+import { isValidSlotId } from '../slots/service.js';
 
 export const createBooking = async (req, res) => {
-  const { userId, shopId, barberName, service, timeSlot } = req.body;
-  if (!shopId || !userId || !service || !timeSlot)
-    return apiResponse(res, false, 'Missing required fields', null, 400);
+  const { shopId, service, slotId, date } = req.body;
+  const userId = req.user && req.user._id;
+  if (!shopId || !service || !slotId || !date) return apiResponse(res, false, 'Missing required fields', null, 400);
 
-  // Prevent double booking for same shop and timeslot (unless cancelled)
-  const existing = await Booking.findOne({ shopId, timeSlot, status: { $ne: 'cancelled' } });
-  if (existing) return apiResponse(res, false, 'Time slot already booked', null, 409);
+  // validate slotId format
+  if (!isValidSlotId(slotId)) return apiResponse(res, false, 'Invalid slotId format', null, 400);
 
-  const booking = await Booking.create({ userId, shopId, barberName, service, timeSlot });
+  try {
+    // Prevent double booking for same shop/date/slot (unless cancelled)
+    const existing = await Booking.findOne({ shopId, date, slotId, status: { $ne: 'cancelled' } });
+    if (existing) return apiResponse(res, false, 'Slot already booked', null, 409);
 
-  // Auto-increment queue for the shop
-  const queue = await Queue.findOneAndUpdate(
-    { shopId },
-    { $inc: { currentCount: 1 } },
-    { upsert: true, new: true }
-  );
+    // prevent same user from creating duplicate booking on same slot
+    if (userId) {
+      const dup = await Booking.findOne({ shopId, date, slotId, userId, status: { $ne: 'cancelled' } });
+      if (dup) return apiResponse(res, false, 'You already have a booking for this slot', null, 409);
+    }
 
-  const io = getIo();
-  if (io) {
-    io.to(String(shopId)).emit('newBooking', booking);
-    io.to(String(shopId)).emit('queueUpdated', { shopId, currentCount: queue.currentCount });
+    const booking = await Booking.create({ userId, shopId, service, slotId, date, status: 'confirmed' });
+
+    // Auto-increment queue for the shop
+    const queue = await Queue.findOneAndUpdate(
+      { shopId },
+      { $inc: { currentCount: 1 } },
+      { upsert: true, new: true }
+    );
+
+    const io = getIo();
+    if (io) {
+      io.to(String(shopId)).emit('newBooking', booking);
+      io.to(String(shopId)).emit('queueUpdated', { shopId, currentCount: queue.currentCount });
+    }
+
+    return apiResponse(res, true, 'Booking created', booking, 201);
+  } catch (err) {
+    console.error('createBooking error', err);
+    return apiResponse(res, false, 'Failed to create booking', null, 500);
   }
-
-  return apiResponse(res, true, 'Booking created', booking, 201);
 };
 
 export const getBookingsByShop = async (req, res) => {

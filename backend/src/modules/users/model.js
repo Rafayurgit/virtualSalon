@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
@@ -8,7 +9,7 @@ const userSchema = new Schema(
     phone: { type: String, unique: true, sparse: true },
     email: { type: String, lowercase: true, trim: true, unique: true, sparse: true },
     password: { type: String },
-    role: { type: String, enum: ['customer', 'barber'], default: 'customer' },
+    role: { type: String, enum: ['customer', 'barber', 'admin'], default: 'customer' },
   },
   { timestamps: true }
 );

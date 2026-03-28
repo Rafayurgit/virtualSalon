@@ -17,6 +17,7 @@ import authRouter from './modules/auth/routes.js';
 import paymentsRouter from './modules/payments/routes.js';
 import adminRouter from './modules/admin/routes.js';
 import receiptsRouter from './modules/receipts/routes.js';
+import slotsRouter from './modules/slots/routes.js';
 
 dotenv.config();
 
@@ -25,7 +26,8 @@ const app = express();
 // security
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
+// parse JSON and keep raw body for webhook signature verification
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf.toString(); } }));
 
 // rate limiting (basic)
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
@@ -36,8 +38,8 @@ app.use(morgan('combined'));
 
 // winston simple logger (console)
 const logger = winston.createLogger({
-	level: 'info',
-	transports: [new winston.transports.Console()],
+  level: 'info',
+  transports: [new winston.transports.Console()],
 });
 app.logger = logger;
 
@@ -49,6 +51,7 @@ app.use('/api/bookings', bookingsRouter);
 app.use('/api/barbers', barbersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/slots', slotsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/receipts', receiptsRouter);
 
