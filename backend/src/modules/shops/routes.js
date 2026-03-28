@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/', authMiddleware, roleMiddleware(['barber']), asyncHandler(createShop));
 router.get('/', asyncHandler(getAllShops));
+router.get('/nearby', asyncHandler(getNearbyShops));
 router.get('/:id', asyncHandler(getShopById));
 
 export default router;
